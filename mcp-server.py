@@ -1,6 +1,8 @@
 #from fastmcp import FastMCP
 from mcp.server.fastmcp import FastMCP
 import numpy as np
+import sys
+from math import pow
 
 app=FastMCP('operadores de matrizes')
 
@@ -125,15 +127,119 @@ def is_matrix_line(A:list):
     
 @app.tool(name='is_matrix_diagonal')
 def is_matrix_diagonal(A:list):
-    if is_matrix_quad(A) and is_matrix_null(A):
+    if is_matrix_quad(A):#and is_matrix_null(A)
         A=np.array(A)
         for line in range(0,A.shape[0]):
             for column in range(0,A.shape[1]):
                 if line!=column and A[line][column]!=0:
                     return False
+                
         return True
     else:
         return False
+    
+@app.tool(name='is_matrix_id_quad')
+def is_matrix_id_quad(A:list):
+    if is_matrix_quad(A):
+        A=np.array(A)
+        for line in range(0,A.shape[0]):
+            for column in range(0,A.shape[1]):
+                if (line!=column and A[line][column]!=0) or (line==column and A[line][column]!=1):
+                    return False
+        return True
+    else:
+        return False
+    
+@app.tool(name='is_matrix_tri_sup')
+def is_matrix_tri_sup(A:list):
+    if is_matrix_quad(A):
+        A=np.array(A)
+        for line in range(0,A.shape[0]):
+            for column in range (0,A.shape[1]):
+                if column>line and A[line][column]!=0:
+                    return False
+        return True
+    else:
+        return False
+    
+@app.tool(name='is_matrix_tri_inf')
+def is_matrix_tri_inf(A:list):
+    if is_matrix_quad(A):
+        A=np.array(A)
+        for line in range(0,A.shape[0]):
+            for column in range (0,A.shape[1]):
+                if line<column and A[line][column]!=0:
+                    return False
+        return True
+    else:
+        return False
+    
+@app.tool(name='is_matrix_simetric')
+def is_matrix_simetric(A:list):
+    A=np.array(A)
+    return np.array_equal(A,transpose_matrix(A))
+
+@app.tool(name='get_matrix_trace')
+def get_matrix_trace(A:list):
+    try:
+        if is_matrix_quad(A):
+            A=np.array(A)
+            sum=0
+            for line in range(0,A.shape[0]):
+                for column in range(0,A.shape[1]):
+                    if line==column:
+                        sum+=A[line][column]
+            return sum
+        else:
+            raise Exception('Não foi possível calcular: A matriz não é quadrada')
+    except Exception as e:
+        return e.args
+
+@app.tool(name='la_place')
+def la_place(A:list):
+    try:
+        if is_matrix_quad(A):
+            A=np.array(A)
+            mins=[]
+            mins.append(list(np.min(A, axis=0)))
+            mins.append(list(np.min(A, axis=1)))
+            min=sys.maxsize
+            pos=0#posicao da linha/coluna
+            axis=0#eixo (0 para linha | 1 para coluna)
+            for listmin in range(0,len(mins)):
+                for summin in range(0,len(mins[listmin])):
+                    if summin < min:
+                        min=mins[listmin][summin]
+                    if listmin==1:
+                        axis=listmin
+                    pos=summin
+            sum=0
+            for line in range(0,A.shape[0]):
+                if axis==0:
+                    if pos==line:
+                        A=A[line]
+                        for element in A:
+                            sum+= element * pow(-1, line+column) * minor_entrance
+                for column in range(0,A.shape[1]):
+                    if axis==0:
+                        if pos==line:
+                            sum+= A[line][column] * pow(-1, line+column) * minor_entrance(A, line, column)
+                            #todo
+                        pass
+            
+        else: raise Exception('Não foi possível calcular: A Matriz não é quadrada')
+    except Exception as e: return e.args 
+
+@app.tool(name='minor_entrance')
+def minor_entrance(A:list, line: int, column: int):
+    A=np.array(A)
+    #A=np.delete(A, line, axis=0)
+    #A=np.delete(A, column, axis=1)
+    A_new = A[np.arange(A.shape[0]) != line][:, np.arange(A.shape[1]) != column]
+
+    if A_new.shape==(1,1):
+        return A[0][0]
+    else: la_place(A)
 
 
 if __name__=="__main__":
