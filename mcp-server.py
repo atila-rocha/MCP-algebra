@@ -6,6 +6,7 @@ import math
 from math import pow
 import random
 from scipy.linalg import null_space
+from typing import Callable
 
 app=FastMCP('operadores de matrizes')
 
@@ -198,8 +199,7 @@ def mult_matrix(A:list, B:list):
     except Exception as e:
         # Captura qualquer outro erro inesperado
         return f'Erro inesperado: {e}'
-    
-@app.tool(name='is_matrix_quad')
+
 def is_matrix_quad(A:list):
     '''
     A função 'is_matrix_quad' verifica se uma matriz é quadrada.
@@ -227,6 +227,21 @@ def is_matrix_quad(A:list):
     except Exception as e:
         # Captura qualquer outro erro inesperado
         return f'Erro inesperado: {e}'
+
+@app.tool(name='is_matrix_quad')
+def is_matrix_quad_mcp(A:list):
+    '''
+    A função 'is_matrix_quad' verifica se uma matriz é quadrada.
+    Uma matriz é considerada quadrada se o seu número de linhas for igual ao seu número de colunas.
+
+    Parâmetros:
+    - A (list): A matriz a ser verificada, fornecida como uma lista aninhada.
+
+    Retorna:
+    - bool: Retorna True se a matriz for quadrada; caso contrário, retorna False.
+    - str: Uma mensagem de erro clara se a operação falhar.
+    '''
+    return is_matrix_quad(A)
 
 @app.tool(name='is_matrix_null')
 def is_matrix_null(A:list):
@@ -530,7 +545,6 @@ def get_matrix_trace(A:list):
         # Captura qualquer outro erro inesperado
         return f'Erro inesperado: {e}'
 
-@app.tool(name='la_place')
 def la_place(A:list):
     '''
     A função 'la_place' calcula o determinante de uma matriz usando o Teorema de Laplace.
@@ -573,7 +587,21 @@ def la_place(A:list):
     except (TypeError, ValueError) as e: return f'Erro: {e}'
     except Exception as e: return f'Erro inesperado: {e}'
 
-@app.tool(name='minor_entrance')
+@app.tool(name='la_place')
+def la_place_mcp(A:list):
+    '''
+    A função 'la_place' calcula o determinante de uma matriz usando o Teorema de Laplace.
+    O método é recursivo e deve ser aplicado apenas a matrizes quadradas.
+
+    Parâmetros:
+    - A (list): A matriz para a qual o determinante será calculado, fornecida como uma lista aninhada.
+
+    Retorna:
+    - float: O valor do determinante da matriz.
+    - str: Uma mensagem de erro clara se a operação falhar.
+    '''
+    return la_place(A)
+
 def minor_entrance(A:list, line: int, column: int):
     '''
     A função 'minor_entrance' calcula o menor complementar (ou menor de entrada) de uma matriz
@@ -605,6 +633,33 @@ def minor_entrance(A:list, line: int, column: int):
     if A_new.shape==(1,1):
         return A_new[0][0]
     else: return la_place(A_new)
+
+
+@app.tool(name='minor_entrance')
+def minor_entrance_mcp(A:list, line: int, column: int):
+    '''
+    A função 'minor_entrance' calcula o menor complementar (ou menor de entrada) de uma matriz
+    com relação a uma linha e coluna específicas. Isso é útil, por exemplo, no cálculo do
+    determinante por cofactores (regra de Laplace).
+
+    Parâmetros:
+    - A (list): Matriz original representada como uma lista de listas.
+    - line (int): Índice da linha a ser removida.
+    - column (int): Índice da coluna a ser removida.
+
+    Retorna:
+    - float ou int: O menor complementar correspondente à posição (line, column). Se a matriz
+      resultante tiver tamanho 1x1, retorna o valor diretamente. Caso contrário, a função 
+      chama 'la_place' para calcular o determinante da submatriz resultante.
+
+    Observações:
+    - A função pressupõe que a função auxiliar 'la_place' já está definida e implementa 
+      o cálculo do determinante de forma recursiva (regra de Laplace).
+    - A entrada A deve representar uma matriz numérica válida e de dimensão compatível
+      com os índices informados.
+    '''
+    return minor_entrance(A, line, column)
+
 
 @app.tool(name='get_cofactor')
 def get_cofactor(A:list, line:int, column:int):
@@ -675,7 +730,7 @@ def gauss_elimination_solve(A: list, b: list):
         n = len(b)
 
         # Matriz aumentada
-        amp = np.hstack((A, b))
+        amp = np.hstack((A, b.reshape(-1,1)))
 
         # Eliminação Gaussiana (triangularização com pivoteamento parcial)
         for k in range(n - 1):
@@ -723,7 +778,7 @@ def gauss_jordan_solve(A: list, b: list):#-> np.ndarray
         n = len(b)
 
         # Matriz aumentada
-        amp = np.hstack((A, b))
+        amp = np.hstack((A, b.reshape(-1,1)))
 
         # Eliminação para forma triangular superior
         for k in range(n - 1):
@@ -755,7 +810,7 @@ def gauss_jordan_solve(A: list, b: list):#-> np.ndarray
         return f'Erro inesperado: {e}'
 
 @app.tool(name='cramer_rule')
-def cramer_rule(A, b):
+def cramer_rule(A:list, b:list):
     '''
     Resolve o sistema linear Ax = b usando a Regra de Cramer.
     Este método é eficiente para matrizes de pequeno porte.
@@ -769,8 +824,8 @@ def cramer_rule(A, b):
     - str: Uma mensagem de erro clara se a operação falhar.
     '''
     try:
-        A = A.astype(float)
-        b = b.astype(float).flatten()
+        A = np.array(A, dtype=float)
+        b = np.array(b, dtype=float).flatten()
         if len(A.shape) != 2 or A.shape[0] != A.shape[1] or A.shape[0] != b.size:
             raise TypeError('Erro: As dimensões da matriz A e do vetor b não são compatíveis. A deve ser uma matriz quadrada e o número de linhas deve ser igual ao número de elementos em b.')
 
@@ -794,7 +849,7 @@ def cramer_rule(A, b):
         return f'Erro inesperado: {e}'
 
 @app.tool(name='gauss_seidel_general')
-def gauss_seidel_general(A, b, x0=None, tol=1e-5, max_iter=1000):
+def gauss_seidel_general(A:list, b:list, x0:list=None, tol:float=1e-5, max_iter:int=1000):
     '''
     Resolve o sistema linear Ax = b usando o método iterativo de Gauss-Seidel.
     O método é mais eficiente para matrizes estritamente dominantes pela diagonal.
@@ -811,21 +866,21 @@ def gauss_seidel_general(A, b, x0=None, tol=1e-5, max_iter=1000):
     - str: Uma mensagem de erro clara se a operação falhar ou não convergir.
     '''
     try:
-        A = A.astype(float)
-        b = b.astype(float).flatten()
+        A = np.array(A, dtype=float)
+        b = np.array(b, dtype=float).flatten()
         if len(A.shape) != 2 or A.shape[0] != A.shape[1] or A.shape[0] != b.size:
             raise TypeError('Erro: As dimensões da matriz A e do vetor b não são compatíveis. A deve ser uma matriz quadrada e o número de linhas deve ser igual ao número de elementos em b.')
         n = len(b)
-
+        aviso=""
         diag = np.diag(np.abs(A))
         off_diag_sum = np.sum(np.abs(A), axis=1) - diag
         if np.any(diag <= off_diag_sum):
-            raise ValueError("Erro: A matriz não é estritamente dominante pela diagonal, a convergência não é garantida. O método pode falhar.")
+            aviso="Erro: A matriz não é estritamente dominante pela diagonal, a convergência não é garantida. O método pode falhar."
 
         if x0 is None:
             x = np.zeros(n)
         else:
-            x = x0.astype(float).flatten()
+            x = np.array(x0,dtype=float).flatten()
 
         for iteration in range(1, max_iter + 1):
             x_old = x.copy()
@@ -838,11 +893,14 @@ def gauss_seidel_general(A, b, x0=None, tol=1e-5, max_iter=1000):
             erro = np.linalg.norm(x - x_old, ord=np.inf)  # erro máximo (norma infinito)
 
             # Print opcional do progresso
-            print(f"Iteração {iteration}: x = {x}, erro = {erro:.6e}")
+            #print(f"Iteração {iteration}: x = {x}, erro = {erro:.6e}")
 
             if erro < tol:
-                print("Convergiu!")
-                return x, iteration
+                #print("Convergiu!")
+                result={'X': x,
+                        'iteration': iteration,
+                        'aviso': aviso}
+                return str(result)
 
         raise ValueError(f'Não convergiu no número máximo de iterações. Iteração: {max_iter}, x: {x}')
     except (TypeError, ValueError) as e:
@@ -851,7 +909,7 @@ def gauss_seidel_general(A, b, x0=None, tol=1e-5, max_iter=1000):
         return f'Erro inesperado: {e}'
 
 @app.tool(name='gauss_jacobi_general')
-def gauss_jacobi_general(A, b, x0=None, tol=1e-5, max_iter=1000):
+def gauss_jacobi_general(A:list, b:list, x0:list=None, tol:float=1e-5, max_iter:int=1000):
     '''
     Resolve o sistema linear Ax = b usando o método iterativo de Gauss-Jacobi.
     O método é mais eficiente para matrizes estritamente dominantes pela diagonal.
@@ -868,21 +926,21 @@ def gauss_jacobi_general(A, b, x0=None, tol=1e-5, max_iter=1000):
     - str: Uma mensagem de erro clara se a operação falhar ou não convergir.
     '''
     try:
-        A = A.astype(float)
-        b = b.astype(float).flatten()
+        A = np.array(A, dtype=float)
+        b = np.array(b, dtype=float).flatten()
         if len(A.shape) != 2 or A.shape[0] != A.shape[1] or A.shape[0] != b.size:
             raise TypeError('Erro: As dimensões da matriz A e do vetor b não são compatíveis. A deve ser uma matriz quadrada e o número de linhas deve ser igual ao número de elementos em b.')
         n = len(b)
-
+        aviso=""
         diag = np.diag(np.abs(A))
         off_diag_sum = np.sum(np.abs(A), axis=1) - diag
         if np.any(diag <= off_diag_sum):
-            raise ValueError("Erro: A matriz não é estritamente dominante pela diagonal, a convergência não é garantida. O método pode falhar.")
+            aviso="Erro: A matriz não é estritamente dominante pela diagonal, a convergência não é garantida. O método pode falhar."
 
         if x0 is None:
             x = np.zeros(n)
         else:
-            x = x0.astype(float).flatten()
+            x = np.array(x0,dtype=float).flatten()
 
         for iteration in range(1, max_iter + 1):
             x_old = x.copy()
@@ -898,11 +956,14 @@ def gauss_jacobi_general(A, b, x0=None, tol=1e-5, max_iter=1000):
             erro = np.linalg.norm(x_new - x_old, ord=np.inf)
 
             # Print opcional do progresso
-            print(f"Iteração {iteration}: x = {x_new}, erro = {erro:.6e}")
+            #print(f"Iteração {iteration}: x = {x_new}, erro = {erro:.6e}")
 
             if erro < tol:
-                print("Convergiu!")
-                return x_new, iteration
+                #print("Convergiu!")
+                result={'X': x,
+                        'iteration': iteration,
+                        'aviso': aviso}
+                return str(result)
 
             x = x_new
 
@@ -912,8 +973,7 @@ def gauss_jacobi_general(A, b, x0=None, tol=1e-5, max_iter=1000):
     except Exception as e:
         return f'Erro inesperado: {e}'
 
-@app.tool(name='rank_of_reduced_matrix')
-def rank_of_reduced_matrix(R, tol=1e-12):
+def rank_of_reduced_matrix(R:list, tol=1e-12):
     '''
     Calcula o posto de uma matriz já reduzida (forma escalonada)
     contando o número de linhas que não são zero (com tolerância).
@@ -942,8 +1002,24 @@ def rank_of_reduced_matrix(R, tol=1e-12):
         # Captura qualquer outro erro inesperado
         return f'Erro inesperado: {e}'
 
+@app.tool(name='rank_of_reduced_matrix')
+def rank_of_reduced_matrix_mcp(R:list, tol=1e-12):
+    '''
+    Calcula o posto de uma matriz já reduzida (forma escalonada)
+    contando o número de linhas que não são zero (com tolerância).
+
+    Parâmetros:
+    - R (list): A matriz escalonada, fornecida como uma lista aninhada.
+    - tol (float): A tolerância para considerar uma linha como nula.
+
+    Retorna:
+    - int: O posto da matriz.
+    - str: Uma mensagem de erro clara se a operação falhar.
+    '''
+    return rank_of_reduced_matrix(R=R)
+
 @app.tool(name='nullity_of_matrix')
-def nullity_of_matrix(R, tol=1e-12):
+def nullity_of_matrix(R:list, tol=1e-12):
     '''
     Calcula a nulidade (dimensão do espaço nulo) de uma matriz reduzida.
     A nulidade é calculada usando o Teorema do Posto-Nulidade:
@@ -1018,7 +1094,7 @@ def inverse_matrix(A:list):
         return f'Erro inesperado: {e}'
 
 @app.tool(name='swap_rows')    
-def swap_rows(matrix, i, j):
+def swap_rows(matrix: list, i:int, j:int):
     '''
     Troca a linha i com a linha j de uma matriz.
 
@@ -1052,7 +1128,7 @@ def swap_rows(matrix, i, j):
         return f'Erro inesperado: {e}'
 
 @app.tool(name='multiply_row')
-def multiply_row(matrix, i, c):
+def multiply_row(matrix:list, i:int, c:float):
     '''
     Multiplica a linha i da matriz pelo escalar c.
     Esta é uma das operações elementares de linha usadas para resolver sistemas lineares.
@@ -1067,7 +1143,7 @@ def multiply_row(matrix, i, c):
     - str: Uma mensagem de erro clara se a operação falhar.
     '''
     try:
-        matrix = np.array(matrix)
+        matrix = np.array(matrix, dtype=float)
         if len(matrix.shape) != 2:
             raise TypeError("A entrada não é uma matriz bidimensional válida.")
         num_rows = matrix.shape[0]
@@ -1084,7 +1160,7 @@ def multiply_row(matrix, i, c):
         return f'Erro inesperado: {e}'
 
 @app.tool(name='add_multiple_of_row')
-def add_multiple_of_row(matrix, i, j, c):
+def add_multiple_of_row(matrix:list, i:int, j:int, c:float):
     '''
     Substitui a linha i por (linha i + c * linha j).
     Esta é uma das operações elementares de linha usadas para resolver sistemas lineares
@@ -1374,7 +1450,7 @@ def get_vector_components_from_not_original_point(ponto_P, ponto_Q):
         return f'Erro inesperado: {e}'
 
 @app.tool(name='vector_norm')
-def vector_norm(vetor):
+def vector_norm(vetor:list):
     '''
     A função 'vector_norm' calcula a norma Euclidiana (módulo ou magnitude) de um vetor.
     A norma de um vetor é o seu comprimento, calculado como a raiz quadrada da soma
@@ -1496,7 +1572,7 @@ def dif_between_two_points(p1:list, p2:list):
         return f'Erro inesperado: {e}'
 
 @app.tool(name='vectors_scale_procuct')
-def vectors_scale_procuct(v1, v2):
+def vectors_scale_procuct(v1:list, v2:list):
     '''
     A função 'vectors_scale_procuct' calcula o produto escalar (dot product) de dois vetores.
     O produto escalar só pode ser calculado entre vetores que têm a mesma dimensão.
@@ -1558,7 +1634,7 @@ def produto_elemento_a_elemento(u, v):
         return f'Erro inesperado: {e}'
 
 @app.tool(name='get_angle_between_two_vectors')
-def get_angle_between_two_vectors(u, v, em_graus=False):
+def get_angle_between_two_vectors(u:list, v:list, em_graus:bool=False):
     '''
     A função 'get_angle_between_two_vectors' calcula o ângulo entre dois vetores.
     O ângulo é calculado usando a fórmula do produto escalar: cos(theta) = (u . v) / (||u|| * ||v||).
@@ -3889,8 +3965,8 @@ def verificar_consistencia(matriz_coeficientes:list, vetor_resultados:list):
 
 # equation_func é a condição que define o subconjunto.
 # Por exemplo, para W = {(x,y) em R² ; x - y = 0}, temos:
-@app.tool(name='is_subspace')
-def is_subspace(vectors:list, eq_add:function, eq_scalar:function):
+
+def is_subspace(vectors:list, eq_add:Callable, eq_scalar:Callable):
     """
     Verifica se um conjunto de vetores forma um subespaço vetorial sob as operações definidas.
 
@@ -4033,6 +4109,7 @@ def posto_matriz_svd(matriz: list, tolerancia: float = 1e-10):
         # Captura qualquer outro erro inesperado
         return f'Erro inesperado: {e}'
 
+@app.tool(name='vetores_geram_espaco')
 def vetores_geram_espaco(vetores_geradores: list,
                          vetores_teste: list = None,
                          espaco_alvo: str = None,
