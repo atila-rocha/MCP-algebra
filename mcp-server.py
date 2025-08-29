@@ -675,10 +675,10 @@ def get_cofactor(A:list, line:int, column:int):
 
     Retorna:
     - float ou int: O valor do cofator do elemento na posição (line, column), calculado como:
-      \[
-      \text{cofator} = (-1)^{\text{line} + \text{column}} \times M
-      \]
-      onde \( M \) é o menor complementar, calculado pela função `minor_entrance`.
+      
+      {cofator} = (-1)^{{line} + {column}} * M
+      
+      onde ( M ) é o menor complementar, calculado pela função `minor_entrance`.
 
     - str: Uma mensagem de erro explicando o que deu errado, caso a entrada seja inválida
       ou ocorra algum erro inesperado.
@@ -1273,7 +1273,6 @@ def is_vector_null(A:list):
         # Captura qualquer outro erro inesperado
         return f'Erro inesperado: {e}'
 
-@app.tool(name='vector_sum')
 def vector_sum(A:list, B:list):
     '''
     A função 'vector_sum' calcula a soma de dois vetores.
@@ -1304,6 +1303,24 @@ def vector_sum(A:list, B:list):
     except Exception as e:
         # Captura qualquer outro erro inesperado
         return f'Erro inesperado: {e}'
+@app.tool(name='vector_sum')
+def vector_sum_mcp(A:list, B:list):
+    '''
+    A função 'vector_sum' calcula a soma de dois vetores.
+
+    Para que a soma seja possível, os vetores devem ter a mesma dimensão.
+    Esta função manipula as entradas como vetores (listas de 1 dimensão),
+    retornando um novo vetor que é a soma dos componentes correspondentes.
+
+    Parâmetros:
+    - A (list): O primeiro vetor, fornecido como uma lista.
+    - B (list): O segundo vetor, fornecido como uma lista.
+
+    Retorna:
+    - list: O vetor resultante da soma.
+    - str: Uma mensagem de erro clara se a operação falhar.
+    '''
+    return vector_sum(A,B=B)
 
 @app.tool(name='vector_sub')
 def vector_sub(A:list, B:list):
@@ -1336,8 +1353,7 @@ def vector_sub(A:list, B:list):
         # Captura qualquer outro erro inesperado
         return f'Erro inesperado: {e}'
 
-@app.tool(name='vector_mult_by_an_integer')
-def vector_mult_by_an_integer(vector, scalar):
+def vector_mult_by_an_integer(vector:list, scalar:float):
     '''
     A função 'vector_mult_by_an_integer' multiplica um vetor por um escalar.
     A multiplicação é feita elemento a elemento.
@@ -1363,9 +1379,24 @@ def vector_mult_by_an_integer(vector, scalar):
     except Exception as e:
         # Captura qualquer outro erro inesperado
         return f'Erro inesperado: {e}'
+@app.tool(name='vector_mult_by_an_integer')
+def vector_mult_by_an_integer_mcp(vector:list, scalar:float):
+    '''
+    A função 'vector_mult_by_an_integer' multiplica um vetor por um escalar.
+    A multiplicação é feita elemento a elemento.
+
+    Parâmetros:
+    - vector (list): O vetor a ser multiplicado, fornecido como uma lista.
+    - scalar (float): O escalar (número real) pelo qual o vetor será multiplicado.
+
+    Retorna:
+    - list: O vetor resultante da multiplicação.
+    - str: Uma mensagem de erro clara se a operação falhar.
+    '''
+    return vector_mult_by_an_integer(vector, scalar)
 
 @app.tool(name='is_vector_parallel')
-def is_vector_parallel(v1, v2, tol=1e-9):
+def is_vector_parallel(v1:list, v2:list, tol:float=1e-9):
     '''
     Verifica se dois vetores são paralelos (colineares).
     Dois vetores são paralelos se um for um múltiplo escalar do outro.
@@ -1417,7 +1448,7 @@ def is_vector_parallel(v1, v2, tol=1e-9):
         return False, f'Erro inesperado: {e}'
 
 @app.tool(name='get_vector_components_from_not_original_point')
-def get_vector_components_from_not_original_point(ponto_P, ponto_Q):
+def get_vector_components_from_not_original_point(ponto_P:list, ponto_Q:list):
     '''
     A função 'get_vector_components_from_not_original_point' calcula as componentes de um vetor
     cujo ponto inicial não é a origem.
@@ -1505,7 +1536,7 @@ def unit_vector(vetor):
         return f'Erro inesperado: {e}'
 
 @app.tool(name='is_unit_vector')
-def is_unit_vector(vetor, tol=1e-8):
+def is_unit_vector(vetor:list, tol=1e-8):
     '''
     A função 'is_unit_vector' verifica se um vetor é um vetor unitário.
     Um vetor é unitário se a sua norma (magnitude) for igual a 1, com uma
@@ -1604,7 +1635,7 @@ def vectors_scale_procuct(v1:list, v2:list):
         return f'Erro inesperado: {e}'
 
 @app.tool(name='produto_elemento_a_elemento')
-def produto_elemento_a_elemento(u, v):
+def produto_elemento_a_elemento(u:list, v:list):
     """
     Retorna o produto elemento a elemento (Hadamard) entre dois vetores.
 
@@ -3768,7 +3799,7 @@ def converter_para_homogenea(vetor):
     return np.append(vetor, 1)
 
 @app.tool(name='verificar_espaco_vetorial')
-def verificar_espaco_vetorial(conjunto_vetores, vetor_nulo):
+def verificar_espaco_vetorial(conjunto_vetores:list, vetor_nulo:list):
     """
     Verifica de forma prática se um conjunto de vetores forma um espaço vetorial,
     testando uma amostra dos dez axiomas principais.
@@ -3777,7 +3808,7 @@ def verificar_espaco_vetorial(conjunto_vetores, vetor_nulo):
     prática para fins de demonstração, usando os vetores fornecidos como exemplos.
     
     Args:
-        conjunto_vetores (list ou set): Uma coleção de vetores para teste.
+        conjunto_vetores (list ou set): Uma coleção de vetores para teste. (LISTA COM LISTAS(VETORES))
         vetor_nulo (tuple ou np.array): O vetor nulo esperado para o conjunto.
 
     Returns:
@@ -3834,7 +3865,9 @@ def verificar_espaco_vetorial(conjunto_vetores, vetor_nulo):
         print("-> Verificando a existência do inverso aditivo...")
         u = np.array(random.choice(conjunto_vetores))
         inverso_u = vector_mult_by_an_integer(-1, u)
-        if not np.array_equal(vector_sum(u, inverso_u), vetor_nulo):
+        if isinstance(inverso_u,str):
+            raise TypeError('Erro levantado na multiplicação.')
+        if not np.allclose(vector_sum(u, inverso_u), vetor_nulo):
             raise ValueError(f"Falha no Axioma 5: A soma de {u} e seu inverso aditivo não resulta no vetor nulo.")
 
         # --- Axiomas de Multiplicação por Escalar ---
@@ -4235,7 +4268,6 @@ def vetores_geram_espaco(vetores_geradores: list,
     # Se nem espaco_alvo nem vetores_teste foram fornecidos, apenas retorna as informações sobre os vetores geradores.
     return True, informacoes
 
-@app.tool(name='check_linear_independence')
 def check_linear_independence(vectors: list, dim: int):
     """
     Verifica se um conjunto de vetores em R^dim é linearmente independente ou dependente.
@@ -4289,6 +4321,24 @@ def check_linear_independence(vectors: list, dim: int):
     except Exception as e:
         # Captura qualquer outro erro inesperado
         return f'Erro inesperado: {e}'
+
+@app.tool(name='check_linear_independence')
+def check_linear_independence_mcp(vectors: list, dim: int):
+    """
+    Verifica se um conjunto de vetores em R^dim é linearmente independente ou dependente.
+    
+    A verificação é baseada no posto (rank) da matriz formada pelos vetores.
+    Um conjunto de vetores é linearmente independente se e somente se o posto
+    da matriz for igual ao número de vetores no conjunto.
+    
+    Parameters:
+        vectors (list): Lista de vetores, onde cada vetor é uma lista ou array numérico.
+        dim (int): Dimensão do espaço vetorial (ex: 2 para R², 3 para R³).
+    
+    Returns:
+        str: "Independente" ou "Dependente".
+    """
+    return check_linear_independence(vectors, dim)
     
 
 @app.tool(name='is_basis')
